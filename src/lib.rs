@@ -41,21 +41,21 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
         win.close(false)
     };
 
-    let close_keymap = |b: &mut Buffer| -> Result<(), api::Error> {
+    let close_keymap = |b: &Buffer| -> Result<(), api::Error> {
         let opts = SetKeymapOpts::builder()
             .desc("Closes the Devdocs window")
-            .callback(close_window)
+            .callback(close_window.clone())  // Clone the closure for reuse
             .nowait(true)
             .silent(true)
             .build();
 
-        //FIXME: This is not working. second line can't set a keymap because b goes out of scope.
+        // Set both keymaps inside the same function to ensure the buffer reference stays in scope.
         api::Buffer::set_keymap(b, Mode::Normal, "q", "", &opts)?;
         api::Buffer::set_keymap(b, Mode::Normal, "<Esc>", "", &opts)?;
         Ok(())
     };
 
-    close_keymap(&mut buf).ok();
+    close_keymap(&buf).ok();
     ////////////////////////////////////////////
 
     let window = move |_| -> Result<(), api::Error> {
