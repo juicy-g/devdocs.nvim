@@ -1,0 +1,12 @@
+[package]
+name = "devdocs"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+name = "devdocs"
+
+[dependencies]
+html2text = "0.12.5"
+nvim-oxi = { version = "0.5.1",  features = ["neovim-0-10"]}

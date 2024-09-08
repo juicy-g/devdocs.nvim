@@ -1,0 +1,29 @@
+[tasks.build_debug]
+command = "cargo"
+args = ["build"]
+
+[tasks.install_debug]
+command = "mv"
+args = ["target/debug/libdevdocs.so", "lua/devdocs.so" ]
+dependencies = ["build_debug"]
+
+[tasks.debug]
+dependencies = [
+    "build_debug",
+    "install_debug"
+]
+
+[tasks.build_release]
+command = "cargo"
+args = ["build", "--release"]
+
+[tasks.install_release]
+command = "mv"
+args = ["target/release/libdevdocs.so", "lua/devdocs.so" ]
+dependencies = ["build_release"]
+
+[tasks.release]
+dependencies = [
+  "build_release",
+  "install_release"
+]
