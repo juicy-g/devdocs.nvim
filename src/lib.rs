@@ -28,7 +28,6 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
     use std::cell::RefCell;
     use std::rc::Rc;
 
-    //I think I need to do the same thing for buf
     let win: Rc<RefCell<Option<Window>>> = Rc::default();
     let w = Rc::clone(&win);
 
@@ -41,7 +40,7 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
         win.close(false)
     };
 
-    let close_keymap = |b: &Buffer| -> Result<(), api::Error> {
+    let close_keymap = |b: &mut Buffer| -> Result<(), api::Error> {
         let opts = SetKeymapOpts::builder()
             .desc("Closes the Devdocs window")
             .callback(close_window.clone())  // Clone the closure for reuse
@@ -52,10 +51,11 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
         // Set both keymaps inside the same function to ensure the buffer reference stays in scope.
         api::Buffer::set_keymap(b, Mode::Normal, "q", "", &opts)?;
         api::Buffer::set_keymap(b, Mode::Normal, "<Esc>", "", &opts)?;
+
         Ok(())
     };
 
-    close_keymap(&buf).ok();
+    close_keymap(&mut buf).ok();
     ////////////////////////////////////////////
 
     let window = move |_| -> Result<(), api::Error> {
