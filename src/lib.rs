@@ -1,6 +1,8 @@
 use html2text::from_read;
 use nvim_oxi::api::{self, opts::*, types::*, Buffer, Window};
 use nvim_oxi::{print, Dictionary, Function};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[nvim_oxi::plugin]
 fn devdocs() -> nvim_oxi::Result<Dictionary> {
@@ -22,41 +24,11 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
             Ok(())
         });
 
-    ////////////////////////////////////////////
     let mut buf = api::create_buf(false, true)?;
+    let b = buf.clone();
 
-    use std::cell::RefCell;
-    use std::rc::Rc;
-
-    //I think I need to do the same thing for buf
     let win: Rc<RefCell<Option<Window>>> = Rc::default();
     let w = Rc::clone(&win);
-
-    let close_window = move |_| {
-        if win.borrow().is_none() {
-            api::err_writeln("Devdocs window is already closed");
-            return Ok(());
-        }
-        let win = win.borrow_mut().take().unwrap();
-        win.close(false)
-    };
-
-    let close_keymap = |b: &mut Buffer| -> Result<(), api::Error> {
-        let opts = SetKeymapOpts::builder()
-            .desc("Closes the Devdocs window")
-            .callback(close_window)
-            .nowait(true)
-            .silent(true)
-            .build();
-
-        //FIXME: This is not working. second line can't set a keymap because b goes out of scope.
-        api::Buffer::set_keymap(b, Mode::Normal, "q", "", &opts)?;
-        api::Buffer::set_keymap(b, Mode::Normal, "<Esc>", "", &opts)?;
-        Ok(())
-    };
-
-    close_keymap(&mut buf).ok();
-    ////////////////////////////////////////////
 
     let window = move |_| -> Result<(), api::Error> {
         if w.borrow().is_some() {
@@ -80,15 +52,34 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
             .build();
 
         let mut win = w.borrow_mut();
-        *win = Some(api::open_win(&buf, true, &config)?);
+        *win = Some(api::open_win(&b, true, &config)?);
         Ok(())
     };
 
     let opts = CreateCommandOpts::builder()
-        .desc("Opens and closes the Devdocs user interface")
+        .desc("Opens the Devdocs user interface")
         .nargs(CommandNArgs::Zero)
         .build();
     api::create_user_command("Devdocs", window, &opts)?;
+
+    let close_window = move |_| {
+        if win.borrow().is_none() {
+            api::err_writeln("Devdocs window is already closed");
+            return Ok(());
+        }
+        let win = win.borrow_mut().take().unwrap();
+        win.close(false)
+    };
+
+    let opts = SetKeymapOpts::builder()
+        .desc("Closes the Devdocs window")
+        .callback(close_window)
+        .nowait(true)
+        .silent(true)
+        .build();
+
+    Buffer::set_keymap(&mut buf, Mode::Normal, "q", "", &opts)?;
+    Buffer::set_keymap(&mut buf, Mode::Normal, "<Esc>", "q", &opts)?;
 
     let exports = Dictionary::from_iter([("setup", setup)]);
     Ok(exports)
