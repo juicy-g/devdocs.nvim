@@ -24,7 +24,13 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
             Ok(())
         });
 
-    let mut buf = api::create_buf(false, true)?;
+    let mut buf = api::create_buf(false, false)?;
+    api::Buffer::set_lines(
+        &mut buf,
+        ..1,
+        true,
+        [" Press q or <Esc> to close this window."],
+    )?;
     let b = buf.clone();
 
     let win: Rc<RefCell<Option<Window>>> = Rc::default();
@@ -36,6 +42,16 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
             return Ok(());
         }
 
+        let opts = OptionOpts::builder()
+            .scope(api::opts::OptionScope::Global)
+            .build();
+
+        let lines: u32 = api::get_option_value("lines", &opts).unwrap();
+        let height: f32 = lines as f32 * 0.8;
+
+        let columns: u32 = api::get_option_value("columns", &opts).unwrap();
+        let width: f32 = columns as f32 * 0.8;
+
         let config = WindowConfig::builder()
             .relative(WindowRelativeTo::Editor)
             .border(WindowBorder::Rounded)
@@ -45,10 +61,10 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
             ))
             .focusable(true)
             .style(WindowStyle::Minimal)
-            .height(10)
-            .width(40)
-            .row(20)
-            .col(20)
+            .height(height.floor() as u32)
+            .width(width.floor() as u32)
+            .row(((lines as f32 - height) / 2.0).floor() as u32)
+            .col(((columns as f32 - width) / 2.0).floor() as u32)
             .build();
 
         let mut win = w.borrow_mut();
