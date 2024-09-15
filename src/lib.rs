@@ -28,7 +28,7 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
     api::create_augroup("Devdocs", &opts)?;
 
     //Setup buffer
-    let mut buf = api::create_buf(false, false)?;
+    let mut buf = api::create_buf(false, true)?;
     api::Buffer::set_lines(
         &mut buf,
         ..1,
