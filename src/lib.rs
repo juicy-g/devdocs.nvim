@@ -24,6 +24,10 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
             Ok(())
         });
 
+    let opts = CreateAugroupOpts::builder().clear(false).build();
+    api::create_augroup("Devdocs", &opts)?;
+
+    //Setup buffer
     let mut buf = api::create_buf(false, false)?;
     api::Buffer::set_lines(
         &mut buf,
@@ -31,12 +35,13 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
         true,
         [" Press q or <Esc> to close this window."],
     )?;
+    api::Buffer::add_highlight(&mut buf, 0, "Comment", 0, 0..)?;
     let b = buf.clone();
 
     let win: Rc<RefCell<Option<Window>>> = Rc::default();
     let w = Rc::clone(&win);
 
-    let window = move |_| -> Result<(), api::Error> {
+    let open_window = move |_| -> Result<(), api::Error> {
         if w.borrow().is_some() {
             api::err_writeln("Devdocs window is already open");
             return Ok(());
@@ -76,7 +81,7 @@ fn devdocs() -> nvim_oxi::Result<Dictionary> {
         .desc("Opens the Devdocs user interface")
         .nargs(CommandNArgs::Zero)
         .build();
-    api::create_user_command("Devdocs", window, &opts)?;
+    api::create_user_command("Devdocs", open_window, &opts)?;
 
     let close_window = move |_| {
         if win.borrow().is_none() {
