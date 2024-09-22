@@ -9,6 +9,8 @@ name = "devdocs"
 
 [dependencies]
 html2text = "0.12.5"
+serde = "1.0.210"
+optfield = "0.3"
 nvim-oxi = { version = "0.5.1",  features = ["neovim-0-10"]}
 
 [profile.release]

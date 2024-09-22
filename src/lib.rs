@@ -1,26 +1,34 @@
-use html2text::from_read;
+// use html2text::from_read;
 use nvim_oxi::api::{self, opts::*, types::*, Buffer, Window};
 use nvim_oxi::{print, Dictionary, Function};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+mod config;
+use config::{Options, OptionsOpt};
+
 #[nvim_oxi::plugin]
 fn devdocs() -> nvim_oxi::Result<Dictionary> {
-    let setup: Function<Dictionary, Result<(), api::Error>> =
-        Function::from_fn(move |_options: Dictionary| {
-            let opts = CreateCommandOpts::builder()
-                .desc("shows a greetings message")
-                .nargs(CommandNArgs::Zero)
-                .build();
-
-            let greetings = |_args: CommandArgs| {
-                let html = "<h1>Test</h1>";
-                let out = from_read(html.as_bytes(), 20);
-                print!("{out}");
+    let setup: Function<OptionsOpt, Result<(), api::Error>> =
+        Function::from_fn(|opts: OptionsOpt| {
+            let mut options = Options {
+                ..Default::default()
             };
+            options.merge(opts);
 
-            api::create_user_command("Greetings", greetings, &opts)?;
+            print!("{options:?}");
+            // let opts = CreateCommandOpts::builder()
+            //     .desc("shows a greetings message")
+            //     .nargs(CommandNArgs::Zero)
+            //     .build();
 
+            // let greetings = |_args: CommandArgs| {
+            //     let html = "<h1>Test</h1>";
+            //     let out = from_read(html.as_bytes(), 20);
+            //     print!("{out}");
+            // };
+
+            // api::create_user_command("Greetings", greetings, &opts)?;
             Ok(())
         });
 
