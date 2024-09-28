@@ -3,6 +3,7 @@ use nvim_oxi::api::{self, opts::*, types::*, Buffer, Window};
 use nvim_oxi::{print, Dictionary, Function};
 use std::cell::RefCell;
 use std::rc::Rc;
+use validator::Validate;
 
 mod config;
 use config::{Options, OptionsOpt};
@@ -10,13 +11,33 @@ use config::{Options, OptionsOpt};
 #[nvim_oxi::plugin]
 fn devdocs() -> nvim_oxi::Result<Dictionary> {
     let setup: Function<OptionsOpt, Result<(), api::Error>> =
-        Function::from_fn(|opts: OptionsOpt| {
+        Function::from_fn(|mut opts: OptionsOpt| {
+            // validate options from setup function
+            match opts.validate() {
+                Ok(_) => (),
+                Err(e) => {
+                    for values in e.field_errors().values() {
+                        for error in values.iter() {
+                            use std::borrow::Borrow;
+                            match error.code.borrow() {
+                                "url" => {
+                                    // replace invalid url with the default url
+                                    opts.url = Default::default();
+                                    print!("{}", error.message.to_owned().unwrap());
+                                }
+                                &_ => todo!(),
+                            }
+                        }
+                    }
+                }
+            };
+
             let mut options = Options {
                 ..Default::default()
             };
             options.merge(opts);
 
-            print!("{options:?}");
+            // print!("{options:?}");
             // let opts = CreateCommandOpts::builder()
             //     .desc("shows a greetings message")
             //     .nargs(CommandNArgs::Zero)
